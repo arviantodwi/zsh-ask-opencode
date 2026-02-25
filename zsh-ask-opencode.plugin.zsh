@@ -91,9 +91,10 @@ ask_opencode() {
 
   # Clean the output to remove ANSI sequences and starship prompts
   output=$(_clean_output "$output")
+
+  # Split cleaned output into commands array by newlines using zsh's @f flag
   local -a commands
-  local IFS=$'\0'
-  commands=(${=output})
+  commands=("${(@f)output}")
 
   if [[ "$ASK_OPENCODE_DEBUG" == "1" ]]; then
     echo "[ask_opencode] Parsed commands:" > /dev/tty
