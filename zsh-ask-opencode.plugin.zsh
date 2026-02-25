@@ -19,6 +19,27 @@ _trim() {
   echo "$str"
 }
 
+# Remove ANSI escape sequences and starship prompt formatting
+_clean_output() {
+  local output="$1"
+  
+  # Remove ANSI escape sequences (various formats)
+  output=$(printf '%s' "$output" | sed 's/\x1b\[[0-9;]*[A-Za-z]//g')
+  output=$(printf '%s' "$output" | sed 's/\033\[[0-9;]*[A-Za-z]//g')
+  output=$(printf '%s' "$output" | sed 's/\e\[[0-9;]*[A-Za-z]//g')
+  
+  # Convert NUL separators to newlines for processing
+  output=$(printf '%s' "$output" | tr '\0' '\n')
+  
+  # Remove empty lines and lines starting with '>' (starship prompt)
+  output=$(printf '%s' "$output" | sed -E '/^$/d; /^[[:space:]]*>/d')
+  
+  # Remove any remaining prompt-like lines (contain model names or build indicators)
+  output=$(printf '%s' "$output" | grep -vE '(minimax|build|model|free)' || true)
+  
+  echo "$output"
+}
+
 # Show spinner and run command
 _run_with_spinner() {
   _ask_opencode_spinner &
@@ -68,9 +89,8 @@ ask_opencode() {
     print -r -- "$output" | tr '\0' '\n' | nl -ba > /dev/tty
   fi
 
-  # Convert literal \0 to real NUL, then split
-  output="${output//$'\n'/}"
-  output=${output//\\0/$'\0'}
+  # Clean the output to remove ANSI sequences and starship prompts
+  output=$(_clean_output "$output")
   local -a commands
   local IFS=$'\0'
   commands=(${=output})
