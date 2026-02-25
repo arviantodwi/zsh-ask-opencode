@@ -85,12 +85,17 @@ ask_opencode() {
   fi
 
   if [[ "$ASK_OPENCODE_DEBUG" == "1" ]]; then
-    echo "[ask_opencode] Raw output (NUL-separated):" > /dev/tty
+    echo "[ask_opencode] Raw output (BEFORE CLEANING, NUL-separated):" > /dev/tty
     print -r -- "$output" | tr '\0' '\n' | nl -ba > /dev/tty
   fi
 
   # Clean the output to remove ANSI sequences and starship prompts
   output=$(_clean_output "$output")
+
+  if [[ "$ASK_OPENCODE_DEBUG" == "1" ]]; then
+    echo "[ask_opencode] Cleaned output (AFTER CLEANING):" > /dev/tty
+    print -r -l -- "$output" | nl -ba > /dev/tty
+  fi
 
   # Split cleaned output into commands array by newlines using zsh's @f flag
   local -a commands
